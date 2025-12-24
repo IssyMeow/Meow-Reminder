@@ -1,12 +1,13 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { 
   PhGear, PhPlus, PhTrash, PhPawPrint, PhCake, PhCalendarBlank, 
   PhNotePencil, PhX, PhFloppyDisk, PhCheck, PhImage, PhArrowsClockwise, 
   PhLink, PhArrowClockwise, PhHouse, PhClock, 
   PhProhibit, PhRecycle, PhNewspaper, PhLeaf, PhUpload, PhDownload, PhCloudArrowUp,
   PhGlobe, PhMonitorPlay, PhPaperPlane, PhVinylRecord, PhDownloadSimple, PhUploadSimple,
-  PhBell, PhRss, PhPaperPlaneTilt, PhEnvelope, PhSliders, PhDatabase
+  PhBell, PhRss, PhPaperPlaneTilt, PhEnvelope, PhSliders, PhDatabase, PhListBullets, PhCloudArrowDown,
+  PhCornersOut
 } from '@phosphor-icons/vue'
 
 // --- KONFIGURATION ---
@@ -29,14 +30,15 @@ const translations = {
     ph_title: '...', ph_desc: 'Details...',
     btn_cancel: 'Abbrechen', btn_save: 'Meow',
     
-    // SETTINGS TABS
-    st_general: 'Allgemein', st_data: 'Daten', st_notify: 'Alerts',
+    st_general: 'Allgemein', st_data: 'Daten', st_notify: 'Benachrichtigungen',
 
     set_bg: 'Hintergrund-Bild', set_bg_ph: 'Bild-URL oder Upload...', set_bg_current: 'Aktuell', set_upload: 'Bild hochladen',
+    set_fullscreen: 'Auto Vollbild (Kiosk)', 
     set_data: 'System Backup (JSON)', set_export: 'Sichern', set_import: 'Wiederherstellen',
     set_cal_appt: 'Kalender: Termine (ICS)', set_cal_bday: 'Kalender: Wiegenfeste (ICS)',
     set_export_simple: 'Export', set_import_simple: 'Import',
-    set_lang: 'Sprache / Language', info_projects: 'IssyMeow Projects',
+    set_ics_links: 'Online Kalender (ICS Links)', set_ics_ph: 'https://...',
+    set_lang: 'Sprache / Language', info_projects: 'Issy Meow Projects',
     set_notify_time: 'Tägliche Alarm-Zeit',
     set_sec_appt: 'Benachrichtigung: Termine & Müll',
     set_sec_bday: 'Benachrichtigung: Wiegenfeste',
@@ -44,7 +46,8 @@ const translations = {
     set_email: 'E-Mail (SMTP)', set_host: 'SMTP Host', set_user: 'User / E-Mail', set_pass: 'Passwort',
     set_rss: 'RSS Feed (3 Tage Vorschau)',
     trash_none: 'Keine', trash_yellow: 'Gelb', trash_blue: 'Papier', trash_brown: 'Bio', trash_black: 'Rest',
-    msg_import_success: 'Erfolgreich! Meow!', msg_import_error: 'Fehler beim Importieren.', msg_upload_error: 'Fehler beim Upload.'
+    msg_import_success: 'Erfolgreich! Meow!', msg_import_error: 'Fehler beim Importieren.', msg_upload_error: 'Fehler beim Upload.',
+    info_changelog: 'Changelog', modal_changelog_title: 'Änderungsprotokoll'
   },
   en: {
     nav_home: 'Home', nav_add: 'New Entry', nav_settings: 'Settings',
@@ -59,13 +62,15 @@ const translations = {
     ph_title: '...', ph_desc: 'Details...',
     btn_cancel: 'Cancel', btn_save: 'Meow',
 
-    st_general: 'General', st_data: 'Data', st_notify: 'Alerts',
+    st_general: 'General', st_data: 'Data', st_notify: 'Notifications',
 
     set_bg: 'Background Image', set_bg_ph: 'Image URL or Upload...', set_bg_current: 'Current', set_upload: 'Upload Image',
+    set_fullscreen: 'Auto Fullscreen (Kiosk)',
     set_data: 'System Backup (JSON)', set_export: 'Backup', set_import: 'Restore',
     set_cal_appt: 'Calendar: Events (ICS)', set_cal_bday: 'Calendar: Birthdays (ICS)',
     set_export_simple: 'Export', set_import_simple: 'Import',
-    set_lang: 'Language', info_projects: 'IssyMeow Projects',
+    set_ics_links: 'Online Calendars (ICS Links)', set_ics_ph: 'https://...',
+    set_lang: 'Language', info_projects: 'Issy Meow Projects',
     set_notify_time: 'Daily Alert Time',
     set_sec_appt: 'Notification: Events & Trash',
     set_sec_bday: 'Notification: Birthdays',
@@ -73,7 +78,8 @@ const translations = {
     set_email: 'E-Mail (SMTP)', set_host: 'SMTP Host', set_user: 'User / Email', set_pass: 'Password',
     set_rss: 'RSS Feed (3 Day Preview)',
     trash_none: 'None', trash_yellow: 'Recycle', trash_blue: 'Paper', trash_brown: 'Bio', trash_black: 'Trash',
-    msg_import_success: 'Success! Meow!', msg_import_error: 'Error importing.', msg_upload_error: 'Error uploading.'
+    msg_import_success: 'Success! Meow!', msg_import_error: 'Error importing.', msg_upload_error: 'Error uploading.',
+    info_changelog: 'Changelog', modal_changelog_title: 'Changelog'
   },
   ru: {
     nav_home: 'Главная', nav_add: 'Новая запись', nav_settings: 'Настройки',
@@ -88,13 +94,15 @@ const translations = {
     ph_title: '...', ph_desc: 'Подробности...',
     btn_cancel: 'Отмена', btn_save: 'Мяу',
 
-    st_general: 'Общие', st_data: 'Данные', st_notify: 'Уведомл.',
+    st_general: 'Общие', st_data: 'Данные', st_notify: 'Уведомления',
 
     set_bg: 'Фоновое изображение', set_bg_ph: 'URL или загрузка...', set_bg_current: 'Текущее', set_upload: 'Загрузить',
+    set_fullscreen: 'Авто Полный экран (Киоск)',
     set_data: 'Бэкап данных (JSON)', set_export: 'Скачать', set_import: 'Восстановить',
     set_cal_appt: 'Календарь: Встречи (ICS)', set_cal_bday: 'Календарь: Дни рожд. (ICS)',
     set_export_simple: 'Экспорт', set_import_simple: 'Импорт',
-    set_lang: 'Язык / Language', info_projects: 'IssyMeow Projects',
+    set_ics_links: 'Онлайн календари (ICS)', set_ics_ph: 'https://...',
+    set_lang: 'Язык / Language', info_projects: 'Issy Meow Projects',
     set_notify_time: 'Время уведомления',
     set_sec_appt: 'Уведомления: Встречи и Мусор',
     set_sec_bday: 'Уведомления: Дни рождения',
@@ -102,21 +110,27 @@ const translations = {
     set_email: 'E-Mail (SMTP)', set_host: 'SMTP Хост', set_user: 'Польз. / E-Mail', set_pass: 'Пароль',
     set_rss: 'RSS Лента (3 дня)',
     trash_none: 'Нет', trash_yellow: 'Желтый', trash_blue: 'Бумага', trash_brown: 'Био', trash_black: 'Остальное',
-    msg_import_success: 'Успешно! Мяу!', msg_import_error: 'Ошибка импорта.', msg_upload_error: 'Ошибка загрузки.'
+    msg_import_success: 'Успешно! Мяу!', msg_import_error: 'Ошибка импорта.', msg_upload_error: 'Ошибка загрузки.',
+    info_changelog: 'Список изменений', modal_changelog_title: 'Список изменений'
   }
 }
 
 // --- STATE ---
 const birthdays = ref([])
 const appointments = ref([])
+const externalAppointments = ref([]) 
 const notes = ref([])
-const activeSettingsTab = ref('general') // NEU: Tab-State
+const activeSettingsTab = ref('general')
 
 const settings = ref({ 
   backgroundUrl: '', language: 'de',
-  daily_alert_time: '09:00',
-  telegram_active: false, telegram_token: '', telegram_chatid: '',
-  email_active: false, smtp_host: '', smtp_user: '', smtp_pass: ''
+  daily_alert_time: '08:00',
+  tele_appt_active: false, tele_appt_token: '', tele_appt_chat: '',
+  mail_appt_active: false, mail_appt_host: '', mail_appt_user: '', mail_appt_pass: '',
+  tele_bday_active: false, tele_bday_token: '', tele_bday_chat: '',
+  mail_bday_active: false, mail_bday_host: '', mail_bday_user: '', mail_bday_pass: '',
+  ics_links: ['', '', ''],
+  fullscreen_auto: false
 })
 
 const t = (key) => { const lang = settings.value.language || 'de'; return translations[lang][key] || key }
@@ -125,6 +139,7 @@ const t = (key) => { const lang = settings.value.language || 'de'; return transl
 const showAddModal = ref(false)
 const showSettingsModal = ref(false)
 const showInfoModal = ref(false)
+const showChangelogModal = ref(false)
 
 // File Inputs
 const fileInputImport = ref(null)
@@ -135,6 +150,12 @@ const importTarget = ref('appointments')
 const newEntryType = ref('appointment') 
 const newItem = ref({ title: '', date: '', time: '', note: '', trashType: 'none', recurrence: 'none', isAllDay: false })
 
+// --- COMPUTED: MERGE ---
+const allAppointments = computed(() => {
+    const combined = [...appointments.value, ...externalAppointments.value];
+    return combined.sort((a, b) => new Date(a.date) - new Date(b.date));
+})
+
 // --- API ---
 const loadData = async () => {
   try {
@@ -142,16 +163,27 @@ const loadData = async () => {
     const data = await response.json()
     birthdays.value = data.birthdays || []
     appointments.value = data.appointments || []
+    externalAppointments.value = data.external_appointments || [] 
     notes.value = data.notes || []
     if (data.settings) settings.value = { ...settings.value, ...data.settings }
+    
+    if(!settings.value.ics_links) settings.value.ics_links = ['', '', ''];
+    if(settings.value.fullscreen_auto === undefined) settings.value.fullscreen_auto = false;
 
     birthdays.value.sort((a, b) => a.date.slice(5).localeCompare(b.date.slice(5)))
-    appointments.value.sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+    applyFullscreen();
+
   } catch (error) { console.error("Fehler beim Laden:", error) }
 }
 
 const saveData = async () => {
-  const fullData = { settings: settings.value, birthdays: birthdays.value, appointments: appointments.value, notes: notes.value }
+  const fullData = { 
+      settings: settings.value, 
+      birthdays: birthdays.value, 
+      appointments: appointments.value, 
+      notes: notes.value 
+  }
   try {
     await fetch('http://localhost:3000/api/data', {
       method: 'POST',
@@ -161,15 +193,38 @@ const saveData = async () => {
   } catch (error) { console.error("Fehler beim Speichern:", error) }
 }
 
-const testNotification = async (type) => {
-  const tempSettings = { ...settings.value, type: type };
+const testNotification = async (type, category) => {
+  const tempSettings = { ...settings.value, type: type, category: category };
   try {
-    await fetch('http://localhost:3000/api/test-notification', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tempSettings)
-    });
+    await fetch('http://localhost:3000/api/test-notification', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(tempSettings) });
     alert("Test gesendet! / Test sent! 🚀");
   } catch (e) { alert("Fehler beim Testen."); }
 }
+
+const triggerSync = async () => {
+    try {
+        await fetch('http://localhost:3000/api/trigger-sync', { method: 'POST' });
+        loadData(); 
+        alert("Sync gestartet! / Sync started!");
+    } catch(e) { alert("Error"); }
+}
+
+// --- FULLSCREEN LOGIC ---
+const applyFullscreen = () => {
+    const elem = document.documentElement;
+    if (settings.value.fullscreen_auto) {
+        if (!document.fullscreenElement) {
+            elem.requestFullscreen().catch(err => {
+                const retry = () => { elem.requestFullscreen(); window.removeEventListener('click', retry); };
+                window.addEventListener('click', retry, { once: true });
+            });
+        }
+    } else {
+        if (document.fullscreenElement) document.exitFullscreen();
+    }
+}
+
+watch(() => settings.value.fullscreen_auto, () => { applyFullscreen(); saveData(); });
 
 // --- FILE HANDLERS ---
 const triggerWallpaperUpload = () => fileInputWallpaper.value.click()
@@ -209,9 +264,10 @@ const handleImportIcsFile = async (event) => {
 
 // --- ACTIONS ---
 const openAddModal = () => { newItem.value = { title: '', date: new Date().toISOString().split('T')[0], time: '', note: '', trashType: 'none', recurrence: 'none', isAllDay: false }; showAddModal.value = true }
-const openSettingsModal = () => { activeSettingsTab.value = 'general'; showSettingsModal.value = true } // Reset Tab on Open
+const openSettingsModal = () => { activeSettingsTab.value = 'general'; showSettingsModal.value = true }
 const openInfoModal = () => showInfoModal.value = true
-const closeModal = () => { showAddModal.value = false; showSettingsModal.value = false; showInfoModal.value = false }
+const openChangelog = () => { showInfoModal.value = false; showChangelogModal.value = true; }
+const closeModal = () => { showAddModal.value = false; showSettingsModal.value = false; showInfoModal.value = false; showChangelogModal.value = false; }
 const saveSettings = () => { saveData(); closeModal() }
 
 const addEntry = () => {
@@ -230,11 +286,12 @@ const addEntry = () => {
   saveData(); closeModal()
 }
 
+// FIX: ROBUST DELETE
 const deleteItem = (type, id) => {
   if (!confirm("Meow?")) return
-  if (type === 'birthday') birthdays.value = birthdays.value.filter(x => x.id !== id)
-  if (type === 'appointment') appointments.value = appointments.value.filter(x => x.id !== id)
-  if (type === 'note') notes.value = notes.value.filter(x => x.id !== id)
+  if (type === 'birthday') birthdays.value = birthdays.value.filter(x => String(x.id) !== String(id))
+  if (type === 'appointment') appointments.value = appointments.value.filter(x => String(x.id) !== String(id))
+  if (type === 'note') notes.value = notes.value.filter(x => String(x.id) !== String(id))
   saveData()
 }
 
@@ -275,7 +332,18 @@ const bgStyle = computed(() => {
   const url = settings.value.backgroundUrl && settings.value.backgroundUrl.length > 5 ? settings.value.backgroundUrl : defaultWallpaper
   return { backgroundImage: `url('${url}')`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundAttachment: 'fixed' }
 })
-onMounted(() => { loadData() })
+
+// AUTO-RELOAD
+let pollingInterval;
+onMounted(() => { 
+    loadData();
+    pollingInterval = setInterval(() => {
+        if(!showAddModal.value && !showSettingsModal.value && !showInfoModal.value && !showChangelogModal.value) {
+            loadData();
+        }
+    }, 60000); 
+})
+onUnmounted(() => clearInterval(pollingInterval));
 </script>
 
 <template>
@@ -310,14 +378,17 @@ onMounted(() => { loadData() })
         <div class="glass-column">
           <div class="column-header"><PhCalendarBlank size="20" /> {{ t('col_appointments') }} <PhCalendarBlank size="20" /></div>
           <div class="column-content">
-            <div v-for="appt in appointments" :key="appt.id" class="card-entry relative group" :style="getEntryStyle(appt.type)">
+            <div v-for="appt in allAppointments" :key="appt.id" class="card-entry relative group" :style="getEntryStyle(appt.type)">
                <div class="flex justify-between items-start">
-                 <h3 class="font-bold text-lg text-white">{{ appt.title }}</h3>
+                 <h3 class="font-bold text-lg text-white flex items-center gap-2">
+                     <PhGlobe v-if="appt.isExternal" class="text-blue-300 animate-pulse" size="18" />
+                     {{ appt.title }}
+                 </h3>
                  <div v-if="appt.recurrence && appt.recurrence !== 'none'" class="bg-blue-500/20 px-2 py-0.5 rounded text-[10px] text-blue-200 flex items-center gap-1 ml-2"><PhArrowClockwise /> {{ getRecurrenceLabel(appt.recurrence) }}</div>
                </div>
                <p class="text-sm text-gray-300 mt-1 flex items-center gap-2">{{ formatDate(appt.date) }}</p>
                <p v-if="appt.note" class="text-xs text-gray-400 italic mt-2 border-t border-white/5 pt-1">{{ appt.note }}</p>
-               <button @click="deleteItem('appointment', appt.id)" class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition cursor-pointer bg-black/50 rounded-full p-1 backdrop-blur-sm"><PhTrash size="14" /></button>
+               <button v-if="!appt.isExternal" @click="deleteItem('appointment', appt.id)" class="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 text-red-400 hover:text-red-300 transition cursor-pointer bg-black/50 rounded-full p-1 backdrop-blur-sm"><PhTrash size="14" /></button>
             </div>
           </div>
         </div>
@@ -415,7 +486,6 @@ onMounted(() => { loadData() })
         </div>
 
         <div class="p-8 space-y-8 overflow-y-auto custom-scrollbar flex-1">
-           
            <div v-if="activeSettingsTab === 'general'" class="space-y-8">
                <div class="flex flex-col gap-3">
                   <label class="text-sm font-semibold text-gray-300 ml-2">{{ t('set_lang') }}</label>
@@ -425,7 +495,6 @@ onMounted(() => { loadData() })
                      <button @click="settings.language = 'ru'" :class="settings.language === 'ru' ? 'bg-blue-600 border-blue-400 text-white' : 'bg-white/5 border-white/10 text-gray-400'" class="flex-1 py-4 border rounded-2xl flex items-center justify-center gap-2 font-bold transition hover:bg-white/10">RU</button>
                   </div>
                </div>
-
                <div class="flex flex-col gap-3 pt-6 border-t border-white/10">
                   <label class="text-sm font-semibold text-gray-300 ml-2">{{ t('set_bg') }}</label>
                   <div class="flex gap-2">
@@ -433,6 +502,11 @@ onMounted(() => { loadData() })
                      <button @click="triggerWallpaperUpload" class="px-4 bg-blue-600/80 hover:bg-blue-500 rounded-2xl flex items-center justify-center text-white shadow-lg transition" :title="t('set_upload')"><PhUpload size="24" weight="bold" /></button>
                   </div>
                   <p class="text-xs text-gray-500 ml-2">{{ t('set_bg_current') }}: {{ settings.backgroundUrl || 'Standard (Lokal)' }}</p>
+               </div>
+               
+               <div class="flex justify-between items-center pt-6 border-t border-white/10">
+                   <label class="text-sm font-semibold text-gray-300 ml-2 flex items-center gap-2"><PhCornersOut /> {{ t('set_fullscreen') }}</label>
+                   <input type="checkbox" v-model="settings.fullscreen_auto" class="w-5 h-5 rounded bg-black/50 border-white/20">
                </div>
            </div>
 
@@ -451,6 +525,16 @@ onMounted(() => { loadData() })
                   </div>
                </div>
 
+               <div class="flex flex-col gap-3 pt-6 border-t border-white/10">
+                  <div class="flex justify-between items-center">
+                      <label class="text-sm font-semibold text-gray-300 ml-2 flex items-center gap-2"><PhCloudArrowDown /> {{ t('set_ics_links') }}</label>
+                      <button @click="triggerSync" class="text-xs text-blue-400 hover:text-white transition cursor-pointer font-bold bg-blue-500/10 px-2 py-1 rounded">Sync Now</button>
+                  </div>
+                  <input v-model="settings.ics_links[0]" type="text" class="glass-input w-full px-3 py-2 rounded-xl text-sm" :placeholder="t('set_ics_ph')">
+                  <input v-model="settings.ics_links[1]" type="text" class="glass-input w-full px-3 py-2 rounded-xl text-sm" :placeholder="t('set_ics_ph')">
+                  <input v-model="settings.ics_links[2]" type="text" class="glass-input w-full px-3 py-2 rounded-xl text-sm" :placeholder="t('set_ics_ph')">
+               </div>
+
                <div class="pt-6 border-t border-white/10">
                   <label class="text-sm font-semibold text-gray-300 ml-2 block mb-3">{{ t('set_cal_appt') }}</label>
                   <div class="flex gap-4 mb-6">
@@ -463,7 +547,6 @@ onMounted(() => { loadData() })
                         <span class="text-xs font-bold text-gray-300 uppercase tracking-widest">{{ t('set_import_simple') }}</span>
                      </button>
                   </div>
-
                   <label class="text-sm font-semibold text-gray-300 ml-2 block mb-3">{{ t('set_cal_bday') }}</label>
                   <div class="flex gap-4">
                      <button @click="triggerExportIcs('birthdays')" class="flex-1 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl flex flex-col items-center justify-center gap-2 transition group">
@@ -474,13 +557,6 @@ onMounted(() => { loadData() })
                         <PhUploadSimple size="28" class="text-pink-400 group-hover:scale-110 transition" />
                         <span class="text-xs font-bold text-gray-300 uppercase tracking-widest">{{ t('set_import_simple') }}</span>
                      </button>
-                  </div>
-               </div>
-               
-               <div class="flex flex-col gap-3 pt-6 border-t border-white/10">
-                  <label class="text-sm font-semibold text-gray-300 ml-2 flex items-center gap-2"><PhRss /> {{ t('set_rss') }}</label>
-                  <div class="p-3 bg-black/30 rounded-2xl border border-white/10 text-xs text-gray-400 font-mono break-all select-all cursor-pointer hover:text-white" onclick="document.execCommand('copy')">
-                     {{ rssLink }}
                   </div>
                </div>
            </div>
@@ -552,6 +628,13 @@ onMounted(() => { loadData() })
                       </div>
                   </div>
               </div>
+
+              <div class="flex flex-col gap-3 pt-6 border-t border-white/10">
+                  <label class="text-sm font-semibold text-gray-300 ml-2 flex items-center gap-2"><PhRss /> {{ t('set_rss') }}</label>
+                  <div class="p-3 bg-black/30 rounded-2xl border border-white/10 text-xs text-gray-400 font-mono break-all select-all cursor-pointer hover:text-white" onclick="document.execCommand('copy')">
+                     {{ rssLink }}
+                  </div>
+               </div>
            </div>
 
         </div>
@@ -568,27 +651,34 @@ onMounted(() => { loadData() })
              <img :src="catIcon" style="width: 240px; height: 240px;" class="object-contain invert drop-shadow-xl" />
          </div>
          <h2 class="text-3xl font-black text-white mb-2">Meow Reminder</h2>
-         <p class="text-gray-400 text-base mb-6">v1.1.0 • Paw Edition</p>
+         <p class="text-gray-400 text-base mb-6">v1.2.3 • Paw Edition</p>
          
          <div class="mb-8">
-            <p class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">{{ t('info_projects') }}</p>
+            <p class="text-xs font-bold text-gray-500 mb-4">{{ t('info_projects') }}</p>
             <div class="grid grid-cols-2 gap-4">
-               <a href="https://github.com/IssyMeow/Meow-Reminder/" target="_blank" class="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#2a2a35] shadow-xl hover:scale-105 hover:bg-[#353542] transition group" title="GitHub">
+               <a href="https://github.com/IssyMeow/Meow-Reminder/" target="_blank" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl shadow-lg hover:scale-105 transition no-underline group" style="background-color: #2a2a35 !important; color: white !important;" title="GitHub">
                   <PhLink size="24" class="text-white group-hover:text-blue-300" />
-                  <span class="text-sm font-bold text-white">GitHub</span>
+                  <span class="text-sm font-bold text-white group-hover:text-white">GitHub</span>
                </a>
-               <a href="http://youtube.com/@MeowTunesOfficial" target="_blank" class="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#2a2a35] shadow-xl hover:scale-105 hover:bg-[#353542] transition group" title="YouTube">
+               <a href="http://youtube.com/@MeowTunesOfficial" target="_blank" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl shadow-lg hover:scale-105 transition no-underline group" style="background-color: #2a2a35 !important; color: white !important;" title="YouTube">
                   <PhMonitorPlay size="24" class="text-white group-hover:text-red-500" />
-                  <span class="text-sm font-bold text-white">YouTube</span>
+                  <span class="text-sm font-bold text-white group-hover:text-white">YouTube</span>
                </a>
-               <a href="http://issymeow.bandcamp.com/" target="_blank" class="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#2a2a35] shadow-xl hover:scale-105 hover:bg-[#353542] transition group" title="Bandcamp">
+               <a href="http://issymeow.bandcamp.com/" target="_blank" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl shadow-lg hover:scale-105 transition no-underline group" style="background-color: #2a2a35 !important; color: white !important;" title="Bandcamp">
                   <PhVinylRecord size="24" class="text-white group-hover:text-teal-400" />
-                  <span class="text-sm font-bold text-white">Bandcamp</span>
+                  <span class="text-sm font-bold text-white group-hover:text-white">Bandcamp</span>
                </a>
-               <a href="http://t.me/MeowTunesOfficial" target="_blank" class="flex items-center justify-center gap-3 py-4 rounded-2xl bg-[#2a2a35] shadow-xl hover:scale-105 hover:bg-[#353542] transition group" title="Telegram">
+               <a href="http://t.me/MeowTunesOfficial" target="_blank" class="flex flex-col items-center justify-center gap-2 py-4 rounded-2xl shadow-lg hover:scale-105 transition no-underline group" style="background-color: #2a2a35 !important; color: white !important;" title="Telegram">
                   <PhPaperPlane size="24" class="text-white group-hover:text-blue-400" />
-                  <span class="text-sm font-bold text-white">Telegram</span>
+                  <span class="text-sm font-bold text-white group-hover:text-white">Telegram</span>
                </a>
+            </div>
+
+            <div class="mt-4 flex justify-center">
+                <button @click="openChangelog" class="w-full flex items-center justify-center gap-3 py-4 rounded-2xl shadow-lg hover:scale-105 transition group" style="background-color: #2a2a35 !important; color: white !important;">
+                    <PhListBullets size="24" class="text-white group-hover:text-yellow-400" />
+                    <span class="text-sm font-bold text-white">{{ t('info_changelog') }}</span>
+                </button>
             </div>
          </div>
 
@@ -598,6 +688,21 @@ onMounted(() => { loadData() })
                <PhCheck size="24" class="text-white" />
             </button>
          </div>
+      </div>
+    </div>
+
+    <div v-if="showChangelogModal" class="fixed inset-0 h-screen w-screen z-[9999] flex items-center justify-center blur-overlay p-4">
+      <div class="deepin-box w-[90%] max-w-[600px] flex flex-col max-h-[80vh]">
+        <div class="p-6 border-b border-white/10 flex justify-between items-center bg-white/5">
+          <h2 class="text-xl font-bold text-white flex gap-2 items-center"><PhListBullets /> {{ t('modal_changelog_title') }}</h2>
+          <button @click="closeModal" class="text-gray-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition"><PhX size="24" /></button>
+        </div>
+        <div class="p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6 text-sm text-gray-300">
+            <div><h3 class="text-white font-bold text-lg mb-2">v1.2.3 (Current)</h3><ul class="list-disc pl-5 space-y-1"><li>New: Online Calendar Sync (ICS)</li><li>New: Data Folder Structure (/app/data)</li><li>New: Changelog Added</li><li>Fix: Info Menu Label & Buttons</li><li>Fix: v1.2.0 had the wrong Version Number. v1.1.0 would have been the right one.</li></ul></div>
+            <div><h3 class="text-white font-bold text-lg mb-2">v1.2.0</h3><ul class="list-disc pl-5 space-y-1"><li>New: Notification Channels (Split Trash/Birthdays)</li><li>New: RSS Feed</li><li>New: Docker Support</li></ul></div>
+            <div><h3 class="text-white font-bold text-lg mb-2">v1.1.0</h3><ul class="list-disc pl-5 space-y-1"><li>New: Trash Type Detection</li><li>New: Drag & Drop Uploads</li><li>Fix: Scrollbar Issues</li></ul></div>
+            <div><h3 class="text-white font-bold text-lg mb-2">Alpha 1.0</h3><ul class="list-disc pl-5 space-y-1"><li>Initial Release</li><li>Deepin Glass UI</li></ul></div>
+        </div>
       </div>
     </div>
     
@@ -680,4 +785,3 @@ onMounted(() => { loadData() })
   background-color: rgba(0, 0, 0, 0.6) !important;
 }
 </style>
-

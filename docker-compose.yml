@@ -1,18 +1,15 @@
 version: '3'
 services:
   meow-reminder:
-    # Du kannst das Image später auf DockerHub hochladen als "issymeow/meow-reminder"
-    # Für jetzt baut es lokal:
-    build: . 
+    image: issymeow/meow-reminder:latest
     container_name: meow-reminder
     restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
-      # WICHTIG: Die Datenbank muss persistent sein
-      - ./data.json:/app/data.json
-      # WICHTIG: Die hochgeladenen Wallpaper sollen bleiben
-      - ./public/img/uploads:/app/public/img/uploads
+      # ACHTUNG NEU: Wir mounten jetzt den GANZEN Ordner data
+      # Das data.json File erstellt sich automatisch darin!
+      - ./data:/app/data
+      - ./uploads:/app/public/img/uploads
     environment:
-      # Zeitzone setzen (wichtig für Cronjobs & Müllabfuhr!)
       - TZ=Europe/Berlin

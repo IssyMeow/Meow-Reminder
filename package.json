@@ -1,7 +1,7 @@
 {
   "name": "meow-reminder",
   "private": true,
-  "version": "0.0.0",
+  "version": "v1.2.3_•_Paw_Edition",
   "type": "module",
   "scripts": {
     "dev": "node server.js & vite",
