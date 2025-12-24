@@ -1,60 +1,142 @@
 # 🐾 Meow Reminder: Paw Edition
 
-Ein wunderschöner, lokal gehosteter Reminder im modernen "Deepin Glass" Design.
-Speziell entwickelt für maximale Privatsphäre, Style und smarte Automatisierung.
+**A beautiful, self-hosted reminder dashboard with "Deepin Glass" design, smart trash schedule detection, and privacy at its core.**
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue.svg) ![Edition](https://img.shields.io/badge/edition-Paw-pink.svg)
+![Version](https://img.shields.io/badge/version-1.2.3-blue.svg) ![Edition](https://img.shields.io/badge/edition-Paw-pink.svg) ![Docker Pulls](https://img.shields.io/docker/pulls/issymeow/meow-reminder)
+
+---
+
+## 📸 Gallery
+
+![Dashboard](https://raw.githubusercontent.com/IssyMeow/Meow-Reminder/main/public/img/meow-reminder-ss-01.png)
+*The Dashboard with Appointments, Birthdays & Notes.*
+
+<p float="left">
+  <img src="https://raw.githubusercontent.com/IssyMeow/Meow-Reminder/main/public/img/meow-reminder-ss-02.png" width="45%" />
+  <img src="https://raw.githubusercontent.com/IssyMeow/Meow-Reminder/main/public/img/meow-reminder-ss-03.png" width="45%" /> 
+</p>
+<p float="left">
+  <img src="https://raw.githubusercontent.com/IssyMeow/Meow-Reminder/main/public/img/meow-reminder-ss-04.png" width="45%" />
+  <img src="https://raw.githubusercontent.com/IssyMeow/Meow-Reminder/main/public/img/meow-reminder-ss-05.png" width="45%" />
+</p>
+
+---
 
 ## ✨ Features
 
-* **Privatsphäre First:** Alle Daten bleiben lokal auf deinem Server (`data.json`).
-* **Deepin Glass UI:** Modernes, halb-transparentes Design mit Neon-Effekten & Blur.
-* **Smart Calendar:**
-    * **Müll-Erkennung:** Färbt Termine beim Import automatisch (Blau=Papier, Gelb=Wertstoff, Braun=Bio, Schwarz=Rest).
-    * **Wiegenfeste:** Automatische Altersberechnung ("...wird 45").
-    * **Wiederholungen:** Täglich, Wöchentlich, Monatlich, Jährlich.
-* **Import & Export:**
-    * Voller `.ics` Support (Google Kalender, Outlook).
-    * Getrennter Import für Termine und Geburtstage.
-    * Drag & Drop Wallpaper Upload.
-* **Benachrichtigungen (Push):**
-    * **Getrennte Kanäle:** Sende Müll-Termine in den Familien-Chat und Geburtstage privat.
-    * **Telegram:** Mit HTML-Support und Kanal-Unterstützung.
-    * **E-Mail:** Via SMTP.
-    * **RSS Feed:** Integriere deine Termine & Notizen in jedes Dashboard (Smart Home, Feedly).
-* **International:** Verfügbar in 🇩🇪 Deutsch, 🇬🇧 Englisch und 🇷🇺 Russisch.
-* **Responsive:** Optimiert für Desktop (16:9).
+* **🔒 Privacy First:** No cloud, no tracking. All data is stored locally in your own `data.json`.
+* **💎 Deepin Glass UI:** Modern interface with real-time blur, neon glow effects, and smooth animations.
+* **📅 Smart Calendar:**
+    * **Online Sync (NEU in v1.2.3):** Sync events from external ICS links (e.g., Google Calendar, School, Work).
+    * **Trash Detection:** Automatically recognizes and colors trash pickup dates (Blue=Paper, Yellow=Recycle, Brown=Bio, Black=Trash).
+    * **Birthdays:** Automatically calculates age ("...turns 30").
+* **🖥️ Kiosk Mode (NEU in v1.2.3):** Optional auto-fullscreen mode for wall-mounted displays or tablets.
+* **🔔 Smart Notifications:**
+    * **Double Alert:** Get notified the evening before (20:00) AND on the day of the event (08:00).
+    * **Channels:** Send trash alerts to a family group chat and birthday reminders to your private chat.
+    * **Telegram & E-Mail:** Full HTML support.
+* **🔄 Integration:**
+    * **RSS Feed:** Integrated RSS feed for your Smart Home dashboard (3-day preview).
+    * **Import/Export:** Full backup support and ICS import/export.
+* **🌍 Multi-Language:** English 🇬🇧, German 🇩🇪, Russian 🇷🇺.
 
-## 🚀 Installation mit Docker (Empfohlen)
+---
 
-1.  Repository klonen:
-    ```bash
-    git clone [https://github.com/IssyMeow/Meow-Reminder.git](https://github.com/IssyMeow/Meow-Reminder.git)
-    cd Meow-Reminder
-    ```
-2.  Container starten:
-    ```bash
-    docker-compose up -d --build
-    ```
-3.  Öffne `http://DEINE-IP:3000` im Browser.
+## 🚀 Installation
 
-## 🛠 Manuelle Installation (Entwickler)
+### Option 1: Docker Compose (Recommended)
 
-1.  Node.js (v18+) installieren.
-2.  Abhängigkeiten laden:
-    ```bash
-    npm install
-    ```
-3.  Bauen & Starten:
-    ```bash
-    npm run build
-    node server.js
-    ```
+Create a `docker-compose.yml`:
 
-## ⚙️ Konfiguration
+```yaml
+version: '3'
+services:
+  meow-reminder:
+    image: issymeow/meow-reminder:latest
+    container_name: meow-reminder
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Data folder (Database will be created here automatically)
+      - ./data:/app/data
+      # Uploads folder for custom wallpapers
+      - ./uploads:/app/public/img/uploads
+    environment:
+      - TZ=Europe/Berlin
 
-Alle Einstellungen (Sprache, Hintergrundbild, Telegram-Token, SMTP) können bequem über das **Zahnrad-Symbol** in der Web-Oberfläche vorgenommen werden. Es ist kein Editieren von Config-Dateien nötig!
+```
+
+Start it:
+
+```bash
+docker-compose up -d
+
+```
+
+### Option 2: Docker CLI (ZimaOS / CasaOS)
+
+```bash
+docker run -d \
+  --name meow-reminder \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e TZ=Europe/Berlin \
+  -v /DATA/AppData/meow-reminder/data:/app/data \
+  -v /DATA/AppData/meow-reminder/uploads:/app/public/img/uploads \
+  issymeow/meow-reminder:latest
+
+```
+
+*Note: You don't need to create the `data.json` manually anymore. The container will create it automatically in the `/data` folder on the first start.*
+
+---
+
+## ⚙️ Configuration
+
+Open your browser at `http://YOUR-IP:3000`.
+Click the **Gear Icon ⚙️** to access settings:
+
+* **Language:** Switch between DE, EN, RU.
+* **Wallpaper:** Upload your own background image.
+* **Online Calendars:** Add up to 3 ICS links (Google, Outlook, etc.) to sync automatically every 6 hours.
+* **Notifications:** Configure your Telegram Bot Token and SMTP settings.
+* **Kiosk Mode:** Enable "Auto Fullscreen" if you use this on a dedicated display.
+
+---
+
+## 📜 Changelog
+
+### v1.2.3 (Current)
+
+* **New:** Online Calendar Sync (ICS) - Subscribe to external calendars.
+* **New:** Kiosk Mode (Auto Fullscreen toggle).
+* **New:** Improved Data Structure (Moved to `/app/data` folder).
+* **New:** Added Changelog & Info Menu.
+* **Fix:** Notification Logic (Added pre-alerts for events).
+* **Fix:** Info Menu Label & Buttons.
+* **Fix:** v1.2.0 had the wrong Version Number. v1.1.0 would have been the right one.
+
+### v1.2.0
+
+* **New:** Notification Channels (Split Trash/Birthdays).
+* **New:** RSS Feed Integration.
+* **New:** Full Docker Support.
+
+### v1.1.0
+
+* **New:** Trash Type Detection logic.
+* **New:** Drag & Drop Uploads.
+* **Fix:** Scrollbar Issues.
+
+### Alpha 1.0
+
+* Initial Release with Deepin Glass UI.
 
 ---
 
 *Made with ❤️ and 🐾 by IssyMeow*
+
+```
+
+```
